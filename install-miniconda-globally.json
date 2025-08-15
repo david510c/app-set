@@ -1,0 +1,23 @@
+{
+  "name": "Install Miniconda Globally",
+  "description": "Installs Miniconda to /opt/miniconda for all users.",
+  "version": "1.0",
+  "steps": [
+    {
+      "name": "Download the Miniconda Installer",
+      "command": "wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh"
+    },
+    {
+      "name": "Install Miniconda to a Global Location",
+      "command": "sudo bash miniconda.sh -b -p /opt/miniconda"
+    },
+    {
+      "name": "Set the Global PATH",
+      "command": "echo 'export PATH=\"/opt/miniconda/bin:$PATH\"' | sudo tee /etc/profile.d/miniconda.sh && sudo chmod 644 /etc/profile.d/miniconda.sh"
+    },
+    {
+      "name": "Fix Permissions for All Users",
+      "command": "sudo chmod -R a+rx /opt/miniconda"
+    }
+  ]
+}
