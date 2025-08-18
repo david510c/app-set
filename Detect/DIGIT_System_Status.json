@@ -1,0 +1,23 @@
+{
+  "name": "DIGIT System Status Detection",
+  "description": "Detects system status including drive type, TPM status, AD status, and computer name.",
+  "version": "1.0",
+  "steps": [
+    {
+      "name": "Detect Drive Type",
+      "command": "lsblk -d -o NAME,TYPE | grep disk"
+    },
+    {
+      "name": "Detect TPM Status",
+      "command": "tpm2_getrandom 8 || echo 'No TPM2 device found'"
+    },
+    {
+      "name": "Detect AD Status",
+      "command": "realm list || echo 'Not joined to AD'"
+    },
+    {
+      "name": "Detect Computer Name",
+      "command": "hostname"
+    }
+  ]
+}
