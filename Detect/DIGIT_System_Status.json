@@ -5,15 +5,15 @@
   "steps": [
     {
       "name": "Detect Drive Type",
-      "command": "lsblk -d -o NAME,TYPE | grep disk"
+      "command": "lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS | grep -E 'disk|crypt'"
     },
     {
       "name": "Detect TPM Status",
-      "command": "tpm2_getrandom 8 || echo 'No TPM2 device found'"
+      "command": "(ls /dev/tpm* 2>/dev/null && tpm2_getcap properties-fixed 2>/dev/null | grep -i TPM2_PT_MANUFACTURER) || echo 'No TPM device found'"
     },
     {
       "name": "Detect AD Status",
-      "command": "realm list || echo 'Not joined to AD'"
+      "command": "systemctl status sssd | grep 'sssd_be' | grep -oP '(?<=--domain )[^ ]+' || echo 'Not joined to AD'"
     },
     {
       "name": "Detect Computer Name",
