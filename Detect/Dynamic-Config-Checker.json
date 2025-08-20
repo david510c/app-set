@@ -1,0 +1,95 @@
+{
+  "name": "DGIT System Configuration Manager",
+  "description": "Enterprise-grade system configuration and status detection tool with dynamic UI and security controls",
+  "version": "2.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "900x700",
+    "title": "DGIT Enterprise System Manager"
+  },
+  "steps": [
+    {
+      "name": "System Overview",
+      "command": "echo '=== SYSTEM OVERVIEW ===' && hostname && whoami && date && uptime",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Display basic system information - no authentication required"
+      }
+    },
+    {
+      "name": "Detect Drive Configuration",
+      "command": "lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS,FSTYPE | grep -E 'disk|crypt|part' && echo '' && df -h | head -10",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Analyze storage devices, encryption status, and disk usage"
+      }
+    },
+    {
+      "name": "TPM Security Status",
+      "command": "if ls /dev/tpm* 1>/dev/null 2>&1; then echo 'TPM Device Found:' && ls -la /dev/tpm* && echo '' && tpm2_getcap properties-fixed 2>/dev/null | grep -i TPM2_PT_MANUFACTURER || echo 'TPM manufacturer info unavailable - may require additional tools'; else echo 'No TPM device detected on this system'; fi",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Check Trusted Platform Module (TPM) hardware security status"
+      }
+    },
+    {
+      "name": "Active Directory Status",
+      "command": "echo '=== AD DOMAIN STATUS ===' && systemctl status sssd 2>/dev/null | grep -E 'Active:|sssd_be' | head -5 && echo '' && realm list 2>/dev/null || echo 'SSSD not active or realm tools not available' && echo '' && echo '=== NETWORK DOMAIN INFO ===' && dnsdomainname 2>/dev/null || echo 'No DNS domain configured'",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Verify Active Directory domain join status and authentication services"
+      }
+    },
+    {
+      "name": "Network Configuration",
+      "command": "echo '=== NETWORK INTERFACES ===' && ip addr show | grep -E 'inet |^[0-9]+:' && echo '' && echo '=== ROUTING TABLE ===' && ip route | head -5 && echo '' && echo '=== DNS CONFIGURATION ===' && cat /etc/resolv.conf 2>/dev/null | grep -v '^#' | head -5",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Display network interface configuration, routing, and DNS settings"
+      }
+    },
+    {
+      "name": "Security Services Status",
+      "command": "echo '=== SECURITY SERVICES ===' && systemctl status firewalld 2>/dev/null | grep -E 'Active:|Loaded:' && echo '' && systemctl status fail2ban 2>/dev/null | grep -E 'Active:|Loaded:' && echo '' && echo '=== SELINUX STATUS ===' && getenforce 2>/dev/null || echo 'SELinux not available'",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": true,
+        "button_style": "warning",
+        "tooltip": "Check firewall, intrusion prevention, and SELinux security status"
+      }
+    },
+    {
+      "name": "System Resource Usage",
+      "command": "echo '=== CPU AND MEMORY ===' && free -h && echo '' && lscpu | grep -E 'Model name:|CPU\\(s\\):' && echo '' && echo '=== LOAD AVERAGE ===' && cat /proc/loadavg && echo '' && echo '=== TOP PROCESSES ===' && ps aux --sort=-%cpu | head -6",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Monitor system performance, memory usage, and running processes"
+      }
+    },
+    {
+      "name": "Emergency System Reset",
+      "command": "echo 'This would restart critical services - SIMULATION MODE' && echo 'Services that would be restarted:' && systemctl list-units --type=service --state=running | grep -E 'ssh|network|systemd-resolved' | head -3",
+      "config": {
+        "visible": "after_login",
+        "requires_auth": true,
+        "button_style": "danger",
+        "tooltip": "CAUTION: Emergency restart of critical system services",
+        "confirm_dialog": "This will restart critical system services and may temporarily interrupt connectivity. Are you sure you want to proceed?"
+      }
+    }
+  ]
+}
