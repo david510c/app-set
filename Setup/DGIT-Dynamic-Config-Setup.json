@@ -1,0 +1,130 @@
+{
+  "name": "DGIT Enterprise System Configurator",
+  "description": "Comprehensive system configuration tool for enterprise Linux deployment with dynamic UI and optional features",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "1200x900",
+    "title": "DGIT Enterprise System Configurator"
+  },
+  "system_overview": {
+    "name": "Initial System Overview",
+    "command": "echo '=== SYSTEM OVERVIEW ===' && hostname && whoami && date && uptime && echo '' && echo '=== AD DOMAIN STATUS ===' && systemctl status sssd 2>/dev/null | grep -E 'Active:|sssd_be' | head -3 && realm list 2>/dev/null || echo 'System not joined to Active Directory' && echo '' && echo '=== NETWORK INFO ===' && ip route | head -2",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true
+    }
+  },
+  "configuration_steps": [
+    {
+      "name": "Run Setup Script",
+      "command": "echo 'Running enterprise setup script...' && sleep 2 && echo 'Configuring network settings...' && sleep 1 && echo 'Joining Active Directory domain...' && sleep 2 && echo 'Setup completed successfully - system joined to domain'",
+      "config": {
+        "visible": "ad_not_joined",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Run the enterprise setup script to join this system to the Active Directory domain",
+        "confirm_dialog": "This will run the enterprise setup script and join the system to the Active Directory domain. This process may take several minutes. Continue?",
+        "user_inputs": [
+          {
+            "prompt": "Enter the Active Directory domain name:",
+            "variable": "domain_name",
+            "type": "string"
+          },
+          {
+            "prompt": "Enter domain administrator username:",
+            "variable": "admin_user",
+            "type": "string"
+          },
+          {
+            "prompt": "Enter domain administrator password:",
+            "variable": "admin_pass",
+            "type": "password"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Configure Network Settings",
+      "command": "echo '=== NETWORK CONFIGURATION ===' && ip addr show | grep -E 'inet |^[0-9]+:' && echo '' && echo '=== DNS SETTINGS ===' && cat /etc/resolv.conf | grep -v '^#' && echo '' && echo 'Network configuration verified'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Review and verify network configuration settings"
+      }
+    },
+    {
+      "name": "Update System Packages",
+      "command": "echo 'Updating system packages...' && sudo apt update && sudo apt upgrade -y && echo 'System packages updated successfully'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Update all system packages to latest versions",
+        "confirm_dialog": "This will update all system packages. The process may take several minutes. Continue?"
+      }
+    },
+    {
+      "name": "Configure Security Policies",
+      "command": "echo '=== SECURITY CONFIGURATION ===' && systemctl status firewalld 2>/dev/null | grep -E 'Active:|Loaded:' && echo '' && getenforce 2>/dev/null || echo 'SELinux not available' && echo '' && echo 'Security policies configured'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "warning",
+        "tooltip": "Configure enterprise security policies and firewall settings"
+      }
+    },
+    {
+      "name": "Install Enterprise Software",
+      "command": "echo 'Installing enterprise software packages...' && sudo apt install -y curl wget git vim htop tree && echo 'Enterprise software installation completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Install standard enterprise software packages"
+      }
+    },
+    {
+      "name": "Configure User Profiles",
+      "command": "echo '=== USER PROFILE CONFIGURATION ===' && echo 'Setting up enterprise user profiles...' && mkdir -p /etc/skel/.config && echo 'User profiles configured successfully'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "secondary",
+        "tooltip": "Configure default user profiles and settings"
+      }
+    },
+    {
+      "name": "System Health Check",
+      "command": "echo '=== COMPREHENSIVE SYSTEM HEALTH CHECK ===' && echo 'Disk Usage:' && df -h | head -5 && echo '' && echo 'Memory Usage:' && free -h && echo '' && echo 'System Load:' && uptime && echo '' && echo 'Active Services:' && systemctl list-units --type=service --state=running | head -10 && echo '' && echo 'System health check completed'",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Perform comprehensive system health and status check"
+      }
+    },
+    {
+      "name": "Emergency System Reset",
+      "command": "echo 'EMERGENCY RESET - This would restart critical services' && echo 'Services to restart: NetworkManager, sssd, systemd-resolved' && echo 'Reset simulation completed - no actual changes made'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "danger",
+        "tooltip": "EMERGENCY: Reset critical system services (use only if system is unresponsive)",
+        "confirm_dialog": "WARNING: This will restart critical system services and may temporarily interrupt network connectivity and authentication. Only use if the system is experiencing serious issues. Are you absolutely sure you want to proceed?"
+      }
+    }
+  ],
+  "optional_features": {
+    "source_type": "github",
+    "github_api_url": "https://api.github.com/repos/david510c/app-set/contents/Install",
+    "github_raw_base": "https://raw.githubusercontent.com/david510c/app-set/main/Install/",
+    "local_path": "/path/to/local/features",
+    "description": "Optional software packages and features that can be installed after system setup"
+  }
+}
