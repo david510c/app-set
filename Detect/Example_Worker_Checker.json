@@ -1,0 +1,19 @@
+{
+  "name": "Example Worker Checker",
+  "description": "Demonstrates dynamic UI elements using name and command fields.",
+  "version": "1.0",
+  "steps": [
+    {
+      "name": "Show Date",
+      "command": "date"
+    },
+    {
+      "name": "List Files",
+      "command": "ls -l"
+    },
+    {
+      "name": "Show Current User",
+      "command": "whoami"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Dynamic System Status Checker",
+  "description": "Detects system status including drive type, TPM status, AD status, and computer name. Configurable via JSON.",
+  "version": "1.0",
+  "steps": [
+    {
+      "name": "Detect Drive Type",
+      "command": "lsblk -o NAME,TYPE,SIZE,MOUNTPOINTS | grep -E 'disk|crypt'"
+    },
+    {
+      "name": "Detect TPM Status",
+      "command": "if ls /dev/tpm* 1>/dev/null 2>&1; then ls /dev/tpm*; tpm2_getcap properties-fixed 2>/dev/null | grep -i TPM2_PT_MANUFACTURER || echo 'TPM manufacturer info unavailable'; else echo 'No TPM device found'; fi"
+    },
+    {
+      "name": "Detect AD Status",
+      "command": "systemctl status sssd | grep 'sssd_be' | grep -oP '(?<=--domain )[^ ]+' || echo 'Not joined to AD'"
+    },
+    {
+      "name": "Detect Computer Name",
+      "command": "hostname"
+    }
+  ]
+}
