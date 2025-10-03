@@ -1,0 +1,27 @@
+{
+  "name": "Install Node JS",
+  "description": "Installs the latest LTS version of Node.js globally.",
+  "version": "1.0",
+  "steps": [
+    {
+      "name": "Update Package Index",
+      "command": "sudo apt-get update"
+    },
+    {
+      "name": "Install Prerequisites",
+      "command": "sudo apt-get install -y curl"
+    },
+    {
+      "name": "Add NodeSource Repository",
+      "command": "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"
+    },
+    {
+      "name": "Install Node.js",
+      "command": "sudo apt-get install -y nodejs"
+    },
+    {
+      "name": "Verify Node.js Installation",
+      "command": "node -v && npm -v"
+    }
+  ]
+}
