@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain.com/schemas/dgit-config-minimal-v3.json",
+  "name": "DGIT System Monitor - Minimal Mode",
+  "description": "Read-only system status monitor without configuration capabilities - perfect for compliance dashboards and non-admin users",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": false,
+    "login_type": "none",
+    "theme": "clam",
+    "window_size": "900x700",
+    "title": "DGIT System Status Monitor (Read-Only)",
+    "ui_variant": "minimal"
+  },
+  "system_overview": {
+    "name": "System Status Monitor",
+    "command": "echo '╔═══════════════════════════════════════════════════════════════╗' && echo '║           DGIT SYSTEM STATUS MONITOR (READ-ONLY)              ║' && echo '╠═══════════════════════════════════════════════════════════════╣' && echo '║                                                               ║' && echo '║  System Information:                                          ║' && echo '║  ─────────────────────────────────────────────────────────  ║' && echo -n '║  Hostname: ' && hostname && echo -n '║  User: ' && whoami && echo -n '║  Date: ' && date '+%Y-%m-%d %H:%M:%S' && echo -n '║  Uptime: ' && uptime -p && echo '║                                                               ║' && echo '║  Domain Status:                                               ║' && echo '║  ─────────────────────────────────────────────────────────  ║' && realm list 2>/dev/null | grep -q 'domain-name' && echo '║  ✓ System is joined to Active Directory domain                ║' && realm list 2>/dev/null | grep 'domain-name' || echo '║  ✗ System is NOT joined to any domain                         ║' && echo '║                                                               ║' && echo '║  Resource Usage:                                              ║' && echo '║  ─────────────────────────────────────────────────────────  ║' && echo -n '║  Memory: ' && free -h | grep Mem | awk '{print $3 \" / \" $2 \" (\" int($3/$2*100) \"% used)\"}' && echo -n '║  Disk (/): ' && df -h / | tail -1 | awk '{print $3 \" / \" $2 \" (\" $5 \" used)\"}' && echo -n '║  CPU Load: ' && uptime | awk -F'load average:' '{print $2}' && echo '║                                                               ║' && echo '║  Network Status:                                              ║' && echo '║  ─────────────────────────────────────────────────────────  ║' && ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1 && echo '║  ✓ Network connectivity: OK                                   ║' || echo '║  ✗ Network connectivity: FAILED                               ║' && echo '║                                                               ║' && echo '║  Services Status:                                             ║' && echo '║  ─────────────────────────────────────────────────────────  ║' && echo -n '║  Active services: ' && systemctl list-units --type=service --state=running | grep -c '.service' && echo -n '║  Failed services: ' && systemctl list-units --type=service --state=failed | grep -c '.service' && echo '║                                                               ║' && echo '║  Security Status:                                             ║' && echo '║  ─────────────────────────────────────────────────────────  ║' && sudo ufw status 2>/dev/null | grep -q 'Status: active' && echo '║  ✓ Firewall: Active                                           ║' || echo '║  ✗ Firewall: Inactive or not configured                       ║' && echo '║                                                               ║' && echo '║  Last System Check:' $(date '+%Y-%m-%d %H:%M:%S') '             ║' && echo '╚═══════════════════════════════════════════════════════════════╝' && echo '' && echo 'This is a read-only monitor. No configuration actions available.' && echo 'For system configuration, please use the full DGIT Configurator.'",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true,
+      "refresh_interval": 60
+    }
+  },
+  "configuration_steps": [],
+  "optional_features": {
+    "source_type": "none",
+    "description": "No optional features available in minimal mode"
+  }
+}

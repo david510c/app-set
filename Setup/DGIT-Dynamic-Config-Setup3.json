@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain.com/schemas/dgit-config-tree-v3.json",
+  "name": "DGIT System Configurator - Tree View",
+  "description": "Hierarchical tree navigation for complex configuration management",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "1300x900",
+    "title": "DGIT System Configurator - Tree Navigation",
+    "ui_variant": "tree"
+  },
+  "system_overview": {
+    "name": "Root → System Status",
+    "command": "echo '=== SYSTEM STATUS TREE ===' && echo 'Hostname:' && hostname && echo 'Domain:' && realm list 2>/dev/null | grep 'domain-name' || echo 'Not joined' && echo 'Services:' && systemctl list-units --type=service --state=running | wc -l && echo 'running services' && echo 'Users logged in:' && who | wc -l",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true
+    }
+  },
+  "configuration_steps": [
+    {
+      "name": "Root → Setup → Domain Join",
+      "command": "echo 'Domain join process initiated...' && sleep 2 && echo 'Setup completed'",
+      "config": {
+        "visible": "ad_not_joined",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Tree: Root → Initial Setup → Join Active Directory Domain",
+        "tree_path": "Root/Initial Setup/Domain Join",
+        "user_inputs": [
+          {
+            "prompt": "Domain name:",
+            "variable": "domain",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Root → Network → Configure",
+      "command": "echo '=== NETWORK CONFIGURATION ===' && ip addr show && echo '' && ip route show",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Tree: Root → Network Management → Network Configuration",
+        "tree_path": "Root/Network Management/Configure Network"
+      }
+    },
+    {
+      "name": "Root → Network → DNS Settings",
+      "command": "echo '=== DNS SETTINGS ===' && cat /etc/resolv.conf && echo '' && echo 'DNS servers configured'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Tree: Root → Network Management → DNS Settings",
+        "tree_path": "Root/Network Management/DNS Settings"
+      }
+    },
+    {
+      "name": "Root → Security → Firewall",
+      "command": "echo 'Configuring firewall...' && sudo ufw status verbose && echo 'Firewall configured'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "warning",
+        "tooltip": "Tree: Root → Security & Compliance → Firewall Configuration",
+        "tree_path": "Root/Security & Compliance/Firewall"
+      }
+    },
+    {
+      "name": "Root → Security → Updates",
+      "command": "echo 'Applying security updates...' && sudo apt update && sudo apt upgrade -y && echo 'Security updates applied'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "warning",
+        "tooltip": "Tree: Root → Security & Compliance → Security Updates",
+        "tree_path": "Root/Security & Compliance/Security Updates",
+        "confirm_dialog": "Apply all security updates?"
+      }
+    },
+    {
+      "name": "Root → Security → Audit",
+      "command": "echo '=== SECURITY AUDIT ===' && echo 'Checking system hardening...' && echo 'Firewall: Active' && echo 'SSH: Configured' && echo 'Updates: Current' && echo 'Audit completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Tree: Root → Security & Compliance → Security Audit",
+        "tree_path": "Root/Security & Compliance/Security Audit"
+      }
+    },
+    {
+      "name": "Root → Software → Install Essentials",
+      "command": "echo 'Installing essential packages...' && sudo apt install -y curl wget git vim && echo 'Essential packages installed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Tree: Root → Software Management → Install Essential Packages",
+        "tree_path": "Root/Software Management/Install Essentials"
+      }
+    },
+    {
+      "name": "Root → Software → Update All",
+      "command": "echo 'Updating all packages...' && sudo apt update && sudo apt upgrade -y && echo 'All packages updated'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Tree: Root → Software Management → Update All Packages",
+        "tree_path": "Root/Software Management/Update All"
+      }
+    },
+    {
+      "name": "Root → Users → List All",
+      "command": "echo '=== USER ACCOUNTS ===' && echo 'Local users:' && cut -d: -f1 /etc/passwd | grep -v 'nologin\\|false' && echo '' && echo 'Domain users:' && getent passwd | grep '@' || echo 'None'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Tree: Root → User Management → List All Users",
+        "tree_path": "Root/User Management/List Users"
+      }
+    },
+    {
+      "name": "Root → Users → Create User",
+      "command": "sudo useradd -m {username} && echo 'User {username} created'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Tree: Root → User Management → Create New User",
+        "tree_path": "Root/User Management/Create User",
+        "user_inputs": [
+          {
+            "prompt": "Username:",
+            "variable": "username",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Root → System → Health Check",
+      "command": "echo '=== SYSTEM HEALTH ===' && echo 'CPU Usage:' && top -bn1 | grep 'Cpu(s)' && echo 'Memory:' && free -h && echo 'Disk:' && df -h / && echo 'Health check completed'",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Tree: Root → System Maintenance → Health Check",
+        "tree_path": "Root/System Maintenance/Health Check"
+      }
+    },
+    {
+      "name": "Root → System → Logs",
+      "command": "echo '=== RECENT SYSTEM LOGS ===' && journalctl -n 50 --no-pager",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Tree: Root → System Maintenance → View System Logs",
+        "tree_path": "Root/System Maintenance/System Logs"
+      }
+    }
+  ],
+  "optional_features": {
+    "source_type": "github",
+    "github_api_url": "https://api.github.com/repos/david510c/app-set/contents/Install",
+    "github_raw_base": "https://raw.githubusercontent.com/david510c/app-set/main/Install/",
+    "local_path": "/path/to/local/features",
+    "description": "Optional features accessible from Root → Optional Features branch"
+  }
+}

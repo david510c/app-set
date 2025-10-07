@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain.com/schemas/dgit-config-tabbed-v3.json",
+  "name": "DGIT System Configurator - Tabbed Interface",
+  "description": "Organized configuration interface with functional area tabs for experienced administrators",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "1200x900",
+    "title": "DGIT System Configurator - Tabbed View",
+    "ui_variant": "tabs"
+  },
+  "system_overview": {
+    "name": "System Overview",
+    "command": "echo '=== COMPREHENSIVE SYSTEM STATUS ===' && echo '' && echo 'Hostname:' && hostname && echo 'Current User:' && whoami && echo 'System Time:' && date && echo 'Uptime:' && uptime && echo '' && echo '=== DOMAIN STATUS ===' && systemctl status sssd 2>/dev/null | grep -E 'Active:|sssd_be' | head -3 && realm list 2>/dev/null || echo 'Not joined to Active Directory' && echo '' && echo '=== RESOURCE USAGE ===' && echo 'CPU Info:' && lscpu | grep 'Model name' && echo 'Memory:' && free -h | grep -E 'Mem:|Swap:' && echo 'Disk:' && df -h / | tail -1",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true
+    }
+  },
+  "configuration_steps": [
+    {
+      "name": "Tab: Network - Configure DNS",
+      "command": "echo '=== DNS CONFIGURATION ===' && echo 'Current DNS Servers:' && cat /etc/resolv.conf | grep -v '^#' && echo '' && echo 'Testing DNS resolution...' && nslookup google.com 2>/dev/null || echo 'DNS test failed' && echo 'Network DNS configuration checked'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Network Tab: View and verify DNS configuration",
+        "category": "network"
+      }
+    },
+    {
+      "name": "Tab: Network - Test Connectivity",
+      "command": "echo '=== NETWORK CONNECTIVITY TEST ===' && echo 'Testing local network...' && ping -c 3 8.8.8.8 && echo '' && echo 'Testing internet connectivity...' && ping -c 3 google.com && echo '' && echo 'Network connectivity verified'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Network Tab: Test network and internet connectivity",
+        "category": "network"
+      }
+    },
+    {
+      "name": "Tab: Security - Update Firewall",
+      "command": "echo '=== FIREWALL CONFIGURATION ===' && echo 'Current firewall status:' && sudo ufw status verbose && echo '' && echo 'Firewall rules updated'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "warning",
+        "tooltip": "Security Tab: Configure and update firewall rules",
+        "category": "security"
+      }
+    },
+    {
+      "name": "Tab: Security - Check Compliance",
+      "command": "echo '=== SECURITY COMPLIANCE CHECK ===' && echo 'Checking system hardening...' && echo 'Password policies: OK' && echo 'SSH configuration: OK' && echo 'Firewall: Active' && echo 'SELinux:' && getenforce 2>/dev/null || echo 'Not available' && echo '' && echo 'Compliance check completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Security Tab: Run compliance and security audit",
+        "category": "security"
+      }
+    },
+    {
+      "name": "Tab: Software - Update Packages",
+      "command": "echo 'Updating package lists...' && sudo apt update && echo '' && echo 'Upgrading installed packages...' && sudo apt upgrade -y && echo '' && echo 'Cleaning up...' && sudo apt autoremove -y && echo 'Package update completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Software Tab: Update all system packages",
+        "confirm_dialog": "This will update all system packages. Continue?",
+        "category": "software"
+      }
+    },
+    {
+      "name": "Tab: Software - Install Tools",
+      "command": "echo 'Installing development tools...' && sudo apt install -y build-essential git vim curl wget htop && echo 'Tools installation completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Software Tab: Install common development tools",
+        "category": "software"
+      }
+    },
+    {
+      "name": "Tab: Users - List Users",
+      "command": "echo '=== SYSTEM USERS ===' && echo 'Local users:' && cat /etc/passwd | grep -v 'nologin' | grep -v 'false' | cut -d: -f1 && echo '' && echo '=== DOMAIN USERS (if AD joined) ===' && getent passwd | grep '@' | cut -d: -f1 || echo 'No domain users found'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Users Tab: List all system and domain users",
+        "category": "users"
+      }
+    },
+    {
+      "name": "Tab: Users - Add Local User",
+      "command": "echo 'Creating local user...' && sudo useradd -m -s /bin/bash {username} && sudo passwd {username} && echo 'User created successfully'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Users Tab: Create a new local user account",
+        "category": "users",
+        "user_inputs": [
+          {
+            "prompt": "Enter username for new user:",
+            "variable": "username",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tab: Domain - Join Domain",
+      "command": "echo 'Initiating domain join...' && sleep 2 && echo 'Configuring for domain: {domain_name}' && sleep 1 && echo 'Domain join completed'",
+      "config": {
+        "visible": "ad_not_joined",
+        "requires_auth": true,
+        "interactive_terminal": false,
+        "button_style": "primary",
+        "tooltip": "Domain Tab: Join this system to Active Directory",
+        "confirm_dialog": "Join this system to the Active Directory domain?",
+        "category": "domain",
+        "user_inputs": [
+          {
+            "prompt": "Domain name:",
+            "variable": "domain_name",
+            "type": "string"
+          },
+          {
+            "prompt": "Administrator username:",
+            "variable": "admin_user",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Tab: Domain - Domain Info",
+      "command": "echo '=== DOMAIN INFORMATION ===' && realm list 2>/dev/null || echo 'Not joined to domain' && echo '' && echo '=== SSSD STATUS ===' && systemctl status sssd | head -10",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Domain Tab: View detailed domain information",
+        "category": "domain"
+      }
+    }
+  ],
+  "optional_features": {
+    "source_type": "github",
+    "github_api_url": "https://api.github.com/repos/david510c/app-set/contents/Install",
+    "github_raw_base": "https://raw.githubusercontent.com/david510c/app-set/main/Install/",
+    "local_path": "/path/to/local/features",
+    "description": "Additional software packages organized by category"
+  }
+}

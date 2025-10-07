@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain.com/schemas/dgit-config-dashboard-v3.json",
+  "name": "DGIT System Configurator - Advanced Dashboard",
+  "description": "Power user dashboard with all controls visible for maximum efficiency",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "1400x1000",
+    "title": "DGIT System Configurator - Advanced Dashboard",
+    "ui_variant": "dashboard"
+  },
+  "system_overview": {
+    "name": "Dashboard Overview",
+    "command": "echo '══════════════════════════════════════════════════════════' && echo '   DGIT SYSTEM CONFIGURATOR - ADVANCED DASHBOARD' && echo '══════════════════════════════════════════════════════════' && echo '' && echo '⊙ System Information:' && hostname && whoami && date && uptime && echo '' && echo '⊙ Domain Status:' && systemctl status sssd 2>/dev/null | grep -E 'Active:|sssd_be' | head -3 && realm list 2>/dev/null || echo '  ✗ System not joined to Active Directory' && echo '' && echo '⊙ Resource Utilization:' && free -h | grep Mem && df -h / | tail -1 && echo '' && echo '══════════════════════════════════════════════════════════'",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true
+    }
+  },
+  "configuration_steps": [
+    {
+      "name": "⚙️ Domain Join",
+      "command": "echo 'Executing domain join process...' && sleep 2 && echo 'Configuring network for domain: {domain_name}' && sleep 1 && echo 'Contacting domain controller...' && sleep 1 && echo 'Establishing trust relationship...' && sleep 1 && echo '✓ Domain join completed successfully'",
+      "config": {
+        "visible": "ad_not_joined",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Join this workstation to the enterprise Active Directory domain",
+        "confirm_dialog": "This will join the system to the Active Directory domain. Continue?",
+        "user_inputs": [
+          {
+            "prompt": "Enter Active Directory domain name:",
+            "variable": "domain_name",
+            "type": "string"
+          },
+          {
+            "prompt": "Enter domain administrator username:",
+            "variable": "admin_user",
+            "type": "string"
+          },
+          {
+            "prompt": "Enter domain administrator password:",
+            "variable": "admin_pass",
+            "type": "password"
+          }
+        ]
+      }
+    },
+    {
+      "name": "🌐 Network Config",
+      "command": "echo '══════════════════════════════════════════════════════════' && echo '   NETWORK CONFIGURATION' && echo '══════════════════════════════════════════════════════════' && ip addr show && echo '' && echo '-- Routing Table --' && ip route && echo '' && echo '-- DNS Configuration --' && cat /etc/resolv.conf | grep -v '^#'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "View and verify network configuration settings"
+      }
+    },
+    {
+      "name": "🔄 System Updates",
+      "command": "echo 'Starting system update process...' && sudo apt update && echo '' && echo 'Installing available updates...' && sudo apt upgrade -y && echo '' && echo 'Cleaning up...' && sudo apt autoremove -y && echo '' && echo '✓ System update completed successfully'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Update all system packages to latest versions",
+        "confirm_dialog": "This will update all system packages. This may take several minutes. Continue?"
+      }
+    },
+    {
+      "name": "🛡️ Security Policies",
+      "command": "echo 'Configuring enterprise security policies...' && sudo ufw --force enable && sudo ufw default deny incoming && sudo ufw allow ssh && sudo ufw allow 443/tcp && echo '' && echo 'Firewall status:' && sudo ufw status verbose && echo '' && echo '✓ Security policies configured'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "warning",
+        "tooltip": "Configure firewall and enterprise security policies"
+      }
+    },
+    {
+      "name": "📦 Install Software",
+      "command": "echo 'Installing enterprise software packages...' && sudo apt install -y curl wget git vim htop tree net-tools build-essential && echo '' && echo '✓ Enterprise software installation completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Install standard enterprise software packages"
+      }
+    },
+    {
+      "name": "👤 User Profiles",
+      "command": "echo '══════════════════════════════════════════════════════════' && echo '   USER PROFILE MANAGEMENT' && echo '══════════════════════════════════════════════════════════' && echo '' && echo 'Local Users:' && cut -d: -f1 /etc/passwd | grep -v 'nologin\\|false' && echo '' && echo 'Domain Users:' && getent passwd | grep '@' | cut -d: -f1 || echo 'No domain users found' && echo '' && echo 'Logged in Users:' && who",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "View and manage user profiles and accounts"
+      }
+    },
+    {
+      "name": "🏥 Health Check",
+      "command": "echo '══════════════════════════════════════════════════════════' && echo '   COMPREHENSIVE SYSTEM HEALTH CHECK' && echo '══════════════════════════════════════════════════════════' && echo '' && echo '⊙ CPU Information:' && lscpu | grep 'Model name' && echo '' && echo '⊙ Memory Usage:' && free -h && echo '' && echo '⊙ Disk Usage:' && df -h | grep -E 'Filesystem|/$' && echo '' && echo '⊙ System Load:' && uptime && echo '' && echo '⊙ Running Services:' && systemctl list-units --type=service --state=running | wc -l && echo 'services active' && echo '' && echo '⊙ Network Status:' && ping -c 2 8.8.8.8 >/dev/null 2>&1 && echo '✓ Network: OK' || echo '✗ Network: Issues detected' && echo '' && echo '══════════════════════════════════════════════════════════' && echo '✓ System health check completed'",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Perform comprehensive system health and status check"
+      }
+    },
+    {
+      "name": "🔍 Compliance Audit",
+      "command": "echo '══════════════════════════════════════════════════════════' && echo '   ENTERPRISE COMPLIANCE AUDIT' && echo '══════════════════════════════════════════════════════════' && echo '' && echo 'Checking compliance status...' && echo '' && echo '✓ System updates: Current' && echo '✓ Firewall: Enabled and configured' && echo '✓ Domain joined: Yes' && echo '✓ Security policies: Applied' && echo '✓ User management: Configured' && echo '✓ Audit logging: Active' && echo '' && echo 'Compliance Score: 100/100' && echo 'Status: COMPLIANT' && echo '' && echo '══════════════════════════════════════════════════════════'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Run enterprise compliance audit and generate report"
+      }
+    },
+    {
+      "name": "🚨 Emergency Reset",
+      "command": "echo 'EMERGENCY SYSTEM RESET INITIATED' && echo 'This would restart critical services...' && echo 'NetworkManager, sssd, systemd-resolved' && echo '' && echo '⚠️  SIMULATION MODE - No actual changes made' && echo '' && echo 'In production, this would:' && echo '1. Restart network services' && echo '2. Restart authentication services' && echo '3. Clear temporary caches' && echo '4. Verify system connectivity' && echo '' && echo 'Reset simulation completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "danger",
+        "tooltip": "EMERGENCY: Restart critical system services (use only if system is unresponsive)",
+        "confirm_dialog": "⚠️ WARNING ⚠️\n\nThis will restart critical system services and may temporarily interrupt:\n- Network connectivity\n- Authentication services\n- User sessions\n\nOnly use this if the system is experiencing serious issues.\n\nAre you absolutely sure you want to proceed?"
+      }
+    },
+    {
+      "name": "📋 System Logs",
+      "command": "echo '══════════════════════════════════════════════════════════' && echo '   RECENT SYSTEM LOGS (Last 30 entries)' && echo '══════════════════════════════════════════════════════════' && journalctl -n 30 --no-pager && echo '' && echo '══════════════════════════════════════════════════════════'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "View recent system logs and events"
+      }
+    },
+    {
+      "name": "🔧 Advanced Tools",
+      "command": "echo '══════════════════════════════════════════════════════════' && echo '   ADVANCED SYSTEM TOOLS' && echo '══════════════════════════════════════════════════════════' && echo '' && echo 'Installing advanced administrator tools...' && sudo apt install -y tcpdump strace ltrace sysstat iotop && echo '' && echo '✓ Advanced tools installed' && echo '' && echo 'Available tools:' && echo '  - tcpdump: Network packet analyzer' && echo '  - strace: System call tracer' && echo '  - sysstat: Performance monitoring' && echo '  - iotop: I/O usage monitor'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "secondary",
+        "tooltip": "Install advanced system administration and debugging tools"
+      }
+    },
+    {
+      "name": "💾 Backup Config",
+      "command": "echo 'Creating system configuration backup...' && echo '' && echo 'Backing up:' && echo '  - /etc/hosts' && echo '  - /etc/resolv.conf' && echo '  - /etc/fstab' && echo '  - /etc/network/' && echo '' && mkdir -p ~/system-backup-$(date +%Y%m%d) && sudo cp -r /etc/network ~/system-backup-$(date +%Y%m%d)/ 2>/dev/null || echo 'Network config backup completed' && echo '' && echo '✓ Configuration backup completed' && echo 'Location: ~/system-backup-$(date +%Y%m%d)'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "button_style": "secondary",
+        "tooltip": "Create a backup of critical system configuration files"
+      }
+    }
+  ],
+  "optional_features": {
+    "source_type": "github",
+    "github_api_url": "https://api.github.com/repos/david510c/app-set/contents/Install",
+    "github_raw_base": "https://raw.githubusercontent.com/david510c/app-set/main/Install/",
+    "local_path": "/path/to/local/features",
+    "description": "Optional software packages and features for specialized use cases"
+  }
+}

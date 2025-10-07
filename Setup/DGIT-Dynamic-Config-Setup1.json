@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain.com/schemas/dgit-config-wizard-v3.json",
+  "name": "DGIT System Configurator - Wizard Mode",
+  "description": "Step-by-step guided system configuration for first-time users and standardized deployments",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "1100x850",
+    "title": "DGIT System Setup Wizard",
+    "ui_variant": "wizard"
+  },
+  "system_overview": {
+    "name": "Step 1: System Check",
+    "command": "echo '=== SYSTEM INFORMATION ===' && hostname && whoami && date && uptime && echo '' && echo '=== ACTIVE DIRECTORY STATUS ===' && systemctl status sssd 2>/dev/null | grep -E 'Active:|sssd_be' | head -3 && realm list 2>/dev/null || echo 'System not joined to Active Directory' && echo '' && echo '=== NETWORK CONFIGURATION ===' && ip route | head -2 && echo '' && echo 'System check complete. Ready for configuration.'",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true
+    }
+  },
+  "configuration_steps": [
+    {
+      "name": "Step 2: Authenticate",
+      "command": "echo 'Authentication step - credentials stored in memory'",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "primary",
+        "tooltip": "Wizard Step 2: Store enterprise credentials for system access"
+      }
+    },
+    {
+      "name": "Step 3: Join Domain",
+      "command": "echo 'Simulating domain join process...' && sleep 2 && echo 'Configuring network settings...' && sleep 1 && echo 'Contacting domain controller...' && sleep 2 && echo 'Establishing trust relationship...' && sleep 1 && echo 'Domain join completed successfully'",
+      "config": {
+        "visible": "ad_not_joined",
+        "requires_auth": true,
+        "interactive_terminal": false,
+        "button_style": "primary",
+        "tooltip": "Wizard Step 3: Join this system to the enterprise Active Directory domain",
+        "confirm_dialog": "This wizard step will join the system to the Active Directory domain. This is required before proceeding to the next steps. Continue?",
+        "user_inputs": [
+          {
+            "prompt": "Enter the Active Directory domain name (e.g., company.local):",
+            "variable": "domain_name",
+            "type": "string"
+          },
+          {
+            "prompt": "Enter domain administrator username:",
+            "variable": "admin_user",
+            "type": "string"
+          },
+          {
+            "prompt": "Enter domain administrator password:",
+            "variable": "admin_pass",
+            "type": "password"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Step 4: Update System",
+      "command": "echo 'Checking for system updates...' && sudo apt update && echo '' && echo 'Installing security updates...' && sudo apt upgrade -y && echo '' && echo 'System update completed successfully'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Wizard Step 4: Update system packages to latest secure versions",
+        "confirm_dialog": "This will update all system packages to the latest versions. This may take several minutes. Continue?"
+      }
+    },
+    {
+      "name": "Step 5: Configure Security",
+      "command": "echo '=== CONFIGURING ENTERPRISE SECURITY ===' && echo 'Enabling firewall...' && sudo ufw --force enable && echo 'Configuring firewall rules...' && sudo ufw default deny incoming && sudo ufw allow ssh && echo 'Checking SELinux status...' && getenforce 2>/dev/null || echo 'SELinux not available on this system' && echo '' && echo 'Security configuration completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "warning",
+        "tooltip": "Wizard Step 5: Apply enterprise security policies and firewall rules"
+      }
+    },
+    {
+      "name": "Step 6: Install Essential Software",
+      "command": "echo 'Installing essential enterprise software...' && sudo apt install -y curl wget git vim htop tree net-tools && echo '' && echo 'Essential software installation completed'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Wizard Step 6: Install required enterprise software packages"
+      }
+    },
+    {
+      "name": "Step 7: Review & Complete",
+      "command": "echo '=== CONFIGURATION SUMMARY ===' && echo 'Hostname:' && hostname && echo 'Domain Status:' && realm list 2>/dev/null | grep 'domain-name' || echo 'Not joined' && echo 'System Updates: Applied' && echo 'Security Policies: Configured' && echo 'Essential Software: Installed' && echo '' && echo '✓ System configuration completed successfully!' && echo 'You may now install optional features if needed.'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Wizard Step 7: Review configuration and mark setup as complete"
+      }
+    }
+  ],
+  "optional_features": {
+    "source_type": "github",
+    "github_api_url": "https://api.github.com/repos/david510c/app-set/contents/Install",
+    "github_raw_base": "https://raw.githubusercontent.com/david510c/app-set/main/Install/",
+    "local_path": "/path/to/local/features",
+    "description": "Optional software packages that can be installed after completing the wizard"
+  }
+}

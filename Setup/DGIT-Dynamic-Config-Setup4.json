@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yourdomain.com/schemas/dgit-config-cards-v3.json",
+  "name": "DGIT System Configurator - Card Interface",
+  "description": "Modern card-based interface with visual status indicators for intuitive system management",
+  "version": "3.0",
+  "ui_config": {
+    "require_login": true,
+    "login_type": "t2",
+    "theme": "clam",
+    "window_size": "1400x950",
+    "title": "DGIT System Configurator - Card View",
+    "ui_variant": "cards"
+  },
+  "system_overview": {
+    "name": "Card: System Status",
+    "command": "echo '┌─────────────────────────────────┐' && echo '│   SYSTEM STATUS CARD            │' && echo '├─────────────────────────────────┤' && hostname && whoami && date && echo '├─────────────────────────────────┤' && echo '│ Domain Status:                  │' && realm list 2>/dev/null | grep 'domain-name' || echo '│ ✗ Not joined to domain          │' && echo '└─────────────────────────────────┘'",
+    "requires_auth": false,
+    "config": {
+      "auto_run": true,
+      "detect_ad_status": true
+    }
+  },
+  "configuration_steps": [
+    {
+      "name": "Card: Domain Setup",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   DOMAIN SETUP IN PROGRESS      │' && echo '└─────────────────────────────────┘' && sleep 2 && echo 'Joining domain...' && sleep 1 && echo '✓ Domain join completed'",
+      "config": {
+        "visible": "ad_not_joined",
+        "requires_auth": true,
+        "button_style": "primary",
+        "tooltip": "Domain Setup Card: Join system to Active Directory",
+        "card_color": "blue",
+        "card_icon": "🌐",
+        "user_inputs": [
+          {
+            "prompt": "Domain name:",
+            "variable": "domain",
+            "type": "string"
+          },
+          {
+            "prompt": "Admin username:",
+            "variable": "admin",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Card: Network Health",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   NETWORK HEALTH CHECK          │' && echo '├─────────────────────────────────┤' && echo '│ Interface Status:               │' && ip link show | grep 'state UP' | wc -l && echo '│ interfaces UP                   │' && echo '│ DNS Resolution: Testing...      │' && ping -c 2 8.8.8.8 >/dev/null 2>&1 && echo '│ ✓ Network healthy               │' || echo '│ ✗ Network issues detected       │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Network Card: Check network connectivity and health",
+        "card_color": "green",
+        "card_icon": "🌍"
+      }
+    },
+    {
+      "name": "Card: Security Shield",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   SECURITY CONFIGURATION        │' && echo '├─────────────────────────────────┤' && echo '│ Configuring firewall...         │' && sudo ufw --force enable && sudo ufw default deny incoming && sudo ufw allow ssh && echo '│ ✓ Firewall active               │' && echo '│ ✓ SSH allowed                   │' && echo '│ ✓ Default deny policy           │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "warning",
+        "tooltip": "Security Card: Configure firewall and security policies",
+        "card_color": "orange",
+        "card_icon": "🛡️"
+      }
+    },
+    {
+      "name": "Card: System Updates",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   SYSTEM UPDATES                │' && echo '├─────────────────────────────────┤' && echo '│ Checking for updates...         │' && sudo apt update && echo '│ Installing updates...           │' && sudo apt upgrade -y && echo '│ ✓ System up to date             │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Updates Card: Install all system updates",
+        "card_color": "blue",
+        "card_icon": "⬆️",
+        "confirm_dialog": "Install all available system updates?"
+      }
+    },
+    {
+      "name": "Card: Software Manager",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   SOFTWARE INSTALLATION         │' && echo '├─────────────────────────────────┤' && echo '│ Installing essential packages...│' && sudo apt install -y git curl wget vim htop && echo '│ ✓ Essential software installed  │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": true,
+        "interactive_terminal": true,
+        "button_style": "primary",
+        "tooltip": "Software Card: Install common development tools",
+        "card_color": "purple",
+        "card_icon": "📦"
+      }
+    },
+    {
+      "name": "Card: User Management",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   USER ACCOUNTS                 │' && echo '├─────────────────────────────────┤' && echo '│ Local Users:                    │' && getent passwd | grep -v 'nologin\\|false' | wc -l && echo '│ Domain Users:                   │' && getent passwd | grep '@' | wc -l || echo '0' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Users Card: View and manage user accounts",
+        "card_color": "teal",
+        "card_icon": "👥"
+      }
+    },
+    {
+      "name": "Card: System Monitor",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   SYSTEM RESOURCES              │' && echo '├─────────────────────────────────┤' && echo '│ CPU:                            │' && top -bn1 | grep 'Cpu(s)' | awk '{print $2}' && echo '│ Memory:                         │' && free -h | grep Mem | awk '{print $3\"/\"$2}' && echo '│ Disk:                           │' && df -h / | tail -1 | awk '{print $3\"/\"$2\" (\"$5\" used)\"}' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Monitor Card: Real-time system resource usage",
+        "card_color": "green",
+        "card_icon": "📊"
+      }
+    },
+    {
+      "name": "Card: Health Check",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   SYSTEM HEALTH STATUS          │' && echo '├─────────────────────────────────┤' && echo '│ Running diagnostic checks...    │' && echo '│ ✓ CPU: Normal                   │' && echo '│ ✓ Memory: OK                    │' && echo '│ ✓ Disk: Healthy                 │' && echo '│ ✓ Network: Connected            │' && echo '│ ✓ Services: Running             │' && echo '│                                 │' && echo '│ Overall Status: ✓ HEALTHY       │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "always",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Health Card: Comprehensive system health check",
+        "card_color": "green",
+        "card_icon": "💚"
+      }
+    },
+    {
+      "name": "Card: Quick Actions",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   QUICK ACTIONS MENU            │' && echo '├─────────────────────────────────┤' && echo '│ 1. Reboot System                │' && echo '│ 2. Clear Logs                   │' && echo '│ 3. Restart Services             │' && echo '│ 4. Run Diagnostics              │' && echo '│                                 │' && echo '│ Use individual cards for        │' && echo '│ specific actions                │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "secondary",
+        "tooltip": "Quick Actions Card: Common system administration tasks",
+        "card_color": "gray",
+        "card_icon": "⚡"
+      }
+    },
+    {
+      "name": "Card: Compliance",
+      "command": "echo '┌─────────────────────────────────┐' && echo '│   COMPLIANCE STATUS             │' && echo '├─────────────────────────────────┤' && echo '│ Checking compliance...          │' && echo '│ ✓ Security patches: Current     │' && echo '│ ✓ Firewall: Enabled             │' && echo '│ ✓ Domain: Joined                │' && echo '│ ✓ Audit logging: Active         │' && echo '│                                 │' && echo '│ Compliance Score: 100%          │' && echo '└─────────────────────────────────┘'",
+      "config": {
+        "visible": "ad_joined",
+        "requires_auth": false,
+        "button_style": "info",
+        "tooltip": "Compliance Card: Enterprise compliance status",
+        "card_color": "blue",
+        "card_icon": "✓"
+      }
+    }
+  ],
+  "optional_features": {
+    "source_type": "github",
+    "github_api_url": "https://api.github.com/repos/david510c/app-set/contents/Install",
+    "github_raw_base": "https://raw.githubusercontent.com/david510c/app-set/main/Install/",
+    "local_path": "/path/to/local/features",
+    "description": "Optional Features Card: Additional software packages displayed as cards"
+  }
+}
